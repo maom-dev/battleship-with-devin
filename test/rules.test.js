@@ -142,13 +142,67 @@ test('a ship counts as sunk only when all of its squares are hit', () => {
   assert.equal(isSunk(ship), true);
 });
 
+test('the player cannot fire twice in a row', () => {
+  const game = createGame();
+
+  assert.equal(game.turn, 'player', 'the player shoots first');
+  assert.equal(playerTurn(game, 0, 0).valid, true);
+  assert.equal(game.turn, 'ai', 'the turn must pass to the AI');
+
+  const before = JSON.stringify(game.aiBoard.shots);
+  const secondShot = playerTurn(game, 5, 5);
+  assert.equal(secondShot.valid, false, 'the player fired out of turn');
+  assert.equal(JSON.stringify(game.aiBoard.shots), before, 'an out-of-turn shot changed the board');
+  assert.equal(game.turn, 'ai');
+});
+
+test('the AI cannot fire twice in a row', () => {
+  const game = createGame();
+
+  // It is the player's turn, so the AI may not shoot yet.
+  assert.equal(aiTurn(game).valid, false, 'the AI fired before the player had gone');
+
+  playerTurn(game, 0, 0);
+  assert.equal(aiTurn(game).valid, true);
+  assert.equal(game.turn, 'player', 'the turn must pass back to the player');
+
+  const before = JSON.stringify(game.playerBoard.shots);
+  assert.equal(aiTurn(game).valid, false, 'the AI fired out of turn');
+  assert.equal(JSON.stringify(game.playerBoard.shots), before, 'an out-of-turn shot changed the board');
+});
+
+test('an invalid or repeated shot does not lose the player the turn', () => {
+  const game = createGame();
+
+  // Off the board: refused, and it is still the player's go.
+  assert.equal(playerTurn(game, -1, 0).valid, false);
+  assert.equal(game.turn, 'player');
+
+  // One real shot, then the AI replies, so it is the player's turn again.
+  assert.equal(playerTurn(game, 2, 2).valid, true);
+  aiTurn(game);
+  assert.equal(game.turn, 'player');
+
+  // Clicking the same square again: refused, turn kept.
+  assert.equal(playerTurn(game, 2, 2).valid, false);
+  assert.equal(game.turn, 'player');
+
+  // And a fresh square still works.
+  assert.equal(playerTurn(game, 3, 3).valid, true);
+  assert.equal(game.turn, 'ai');
+});
+
 test('the game ends when one side loses all five ships, and refuses further shots', () => {
   const game = createGame();
 
-  // The player sinks the whole enemy fleet, square by square.
+  // The player sinks the whole enemy fleet, square by square, with the AI
+  // replying in between. The player needs 17 shots, so the AI gets at most 16 —
+  // not enough to sink the player's own 17 squares, so the player always wins.
   for (const ship of game.aiBoard.ships) {
     for (const cell of ship.cells) {
-      if (!game.isOver) playerTurn(game, cell.row, cell.col);
+      if (game.isOver) break;
+      assert.equal(playerTurn(game, cell.row, cell.col).valid, true);
+      aiTurn(game);
     }
   }
 
@@ -165,13 +219,34 @@ test('the game ends when one side loses all five ships, and refuses further shot
 
 test('the AI can win too, and the game stops as soon as it does', () => {
   const game = createGame();
-  // Let the AI keep firing until it has sunk everything the player owns.
+  // Hand the turn to the AI every time so it can play out a whole game on its
+  // own. This is the one place a test deliberately overrides turn order — the
+  // point here is the winning condition, which is tested above.
   for (let i = 0; i < BOARD_SIZE * BOARD_SIZE && !game.isOver; i++) {
+    game.turn = 'ai';
     aiTurn(game);
   }
   assert.equal(game.isOver, true);
   assert.equal(game.winner, 'ai');
   assert.equal(allShipsSunk(game.playerBoard), true);
+});
+
+test('a whole game played by both sides always ends with exactly one winner', () => {
+  for (let round = 0; round < 20; round++) {
+    const game = createGame();
+    // Both sides fire at random. A game can last at most 100 shots each,
+    // because no square may be fired at twice.
+    for (let i = 0; i < BOARD_SIZE * BOARD_SIZE && !game.isOver; i++) {
+      const cell = chooseAiShot(game.aiBoard);
+      playerTurn(game, cell.row, cell.col);
+      aiTurn(game);
+    }
+    assert.equal(game.isOver, true, 'the game never finished');
+    assert.ok(game.winner === 'player' || game.winner === 'ai');
+    const playerLost = allShipsSunk(game.playerBoard);
+    const aiLost = allShipsSunk(game.aiBoard);
+    assert.notEqual(playerLost, aiLost, 'both fleets cannot be sunk at once');
+  }
 });
 
 test('a fresh game starts with an empty record of shots', () => {
@@ -183,4 +258,5 @@ test('a fresh game starts with an empty record of shots', () => {
   }
   assert.equal(game.isOver, false);
   assert.equal(game.winner, null);
+  assert.equal(game.turn, 'player');
 });

@@ -52,9 +52,9 @@ export function canPlace(ships, cells) {
 }
 
 // Keep trying random positions until one is legal, for each ship in turn.
-// Ten ships on a 100-square board leaves plenty of room, so this always
-// succeeds quickly; the attempt limit exists only so a bug can never
-// turn into an infinite loop.
+// Five ships occupy only 17 of the board's 100 squares, so there is plenty of
+// room and this succeeds quickly; the attempt limit exists only so a bug can
+// never turn into an infinite loop.
 export function placeFleetRandomly(random = Math.random) {
   const ships = [];
   for (const type of SHIP_TYPES) {
@@ -143,11 +143,14 @@ export function chooseAiShot(board, random = Math.random) {
   return choices[randomInt(choices.length, random)];
 }
 
-// A game is the two boards plus who has won, if anyone.
+// A game is the two boards, whose turn it is, and who has won, if anyone.
+// Turn order is a rule enforced here, not a convention the screen has to
+// remember: neither side can fire out of turn even if asked to.
 export function createGame(random = Math.random) {
   return {
     playerBoard: createBoard(random),
     aiBoard: createBoard(random),
+    turn: 'player', // the player always shoots first
     isOver: false,
     winner: null, // 'player' or 'ai' once the game ends
   };
@@ -155,25 +158,34 @@ export function createGame(random = Math.random) {
 
 // The player fires at the AI's board. If that ends the game, the AI does not
 // get a reply shot. Returns what happened so the screen can describe it.
+// A refused shot (off the board, or a repeat) does not hand the turn over.
 export function playerTurn(game, row, col) {
-  if (game.isOver) return { valid: false, result: null, sunkShip: null };
+  if (game.isOver || game.turn !== 'player') {
+    return { valid: false, result: null, sunkShip: null };
+  }
   const shot = fireAt(game.aiBoard, row, col);
-  if (shot.valid && allShipsSunk(game.aiBoard)) {
+  if (!shot.valid) return shot;
+  if (allShipsSunk(game.aiBoard)) {
     game.isOver = true;
     game.winner = 'player';
+  } else {
+    game.turn = 'ai';
   }
   return shot;
 }
 
-// The AI fires back once.
+// The AI fires back once, then hands the turn back to the player.
 export function aiTurn(game, random = Math.random) {
-  if (game.isOver) return { valid: false, result: null, sunkShip: null, cell: null };
+  const refused = { valid: false, result: null, sunkShip: null, cell: null };
+  if (game.isOver || game.turn !== 'ai') return refused;
   const cell = chooseAiShot(game.playerBoard, random);
-  if (!cell) return { valid: false, result: null, sunkShip: null, cell: null };
+  if (!cell) return refused;
   const shot = fireAt(game.playerBoard, cell.row, cell.col);
   if (allShipsSunk(game.playerBoard)) {
     game.isOver = true;
     game.winner = 'ai';
+  } else {
+    game.turn = 'player';
   }
   return { ...shot, cell };
 }
