@@ -129,7 +129,12 @@ the boards stack on purpose and the squares return to full size.
 pixels. A ten-wide grid at 44 pixels needs a screen about 494 pixels wide *per board*, so
 that target is unreachable on any phone; the boards get the largest squares the screen
 allows and no more. This is a genuine trade-off of showing two 10x10 grids at once, not
-something a different stylesheet could solve.
+something a different stylesheet could solve, so it was put to the owner as a trade-off to
+accept or reject rather than quietly forced.
+
+**Not recorded as a bug:** he then played the deployed game on his own phone and found the
+squares easy to tap. Falling short of a published guideline is not the same as a defect, so
+this stays a documented trade-off.
 
 **Testing gap this exposed:** the browser used for testing would not resize below 485
 pixels, so narrow layouts were only ever partly checked. That is why a human on a real
@@ -161,6 +166,26 @@ The enemy fleet is also revealed once the game is over, so the final picture can
 against the list.
 
 ---
+
+## Verification after the fixes
+
+Recorded here because a debugging log that only lists failures is misleading — the checks that
+passed are what make the fixes believable.
+
+| Check | Result |
+|---|---|
+| `npm test` | 15 of 15, unchanged by every Checkpoint 3 fix |
+| Keyboard: three shots in a row | Focus stayed on each fired square — the fix for bug 3 |
+| Repeated shot | The explanation now appears, and still costs no turn — the fix for bug 4 |
+| Ship count at game over | Still on screen beside the result — the fix for bug 5 |
+| Layouts 320-844px | Side by side in landscape, stacked in portrait, no horizontal scrolling anywhere — the fix for bug 6 |
+| Touching ships | Every touching pair separated by an outline; fleet lists matched the boards exactly — the fix for bug 7 |
+| Enemy positions before game over | Not present anywhere in the page, not just invisible |
+| Turn discipline | Rapid clicking, spamming one square, clicking during the computer's pause, and pressing New game mid-pause all stayed strictly one shot each |
+| The deployed game on a phone | Landscape boards side by side and easy to tap, portrait stacked, New game resetting correctly |
+
+The last row is the one that matters most, and it is the one no script could produce. Bugs 6
+and 7 were found that way, so the fixes were confirmed the same way.
 
 ## What this log says about the process
 

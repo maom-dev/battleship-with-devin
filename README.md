@@ -3,7 +3,10 @@
 A browser game of Battleship: one human player against a simple computer opponent.
 Built with plain HTML, CSS and JavaScript — no framework, no build step, no server.
 
-**Status: Checkpoint 3 of 4 — playable, and the bugs found by testing are fixed.**
+**Play it: <https://maom-dev.github.io/battleship-with-devin/>**
+
+**Status: complete (Checkpoint 4 of 4).** Deployed, tested in a browser and on a phone, and
+every bug found along the way is written up in [DEBUGGING.md](DEBUGGING.md).
 
 ## How to play
 
@@ -16,6 +19,18 @@ allowed to touch, so each one is outlined to keep two neighbours from looking li
 The enemy's ships stay hidden until the game is over, then the whole enemy fleet is revealed.
 
 The computer picks a square at random from the ones it has not tried yet. It cannot see where your ships are.
+
+## How it was verified
+
+| What | How |
+|---|---|
+| The rules | 15 automated tests (`npm test`), run on every push and pull request by GitHub Actions. |
+| The screen | A scripted browser played complete games and asserted 26 checks: turn discipline under rapid clicking, keyboard play, the fleet lists against the boards, no enemy positions leaking before the end, and every layout from 320px to desktop. |
+| The real thing | The finished game played on a phone: boards side by side in landscape with comfortably tappable squares, stacked in portrait, New game resetting correctly. |
+
+The order matters: the automated tests never found a bug, because they cover the rules and the
+rules were right. Every bug was in the screen — and the last two were found only by a person
+using the deployed game on a real device.
 
 ## Running it on your own machine
 
@@ -68,3 +83,12 @@ request shows a green tick or a red cross before anyone has to read the code.
 ## Licence
 
 MIT — see [LICENSE](LICENSE).
+
+## About this project
+
+Built by [Devin](https://devin.ai) under human direction, in four reviewed checkpoints: the
+rules and their tests, the playable screen, the bug fixes, then deployment and documentation.
+The scope was deliberately kept small — no framework, no build step, random ship placement, one
+simple opponent — so that every decision could be reviewed and explained by a non-engineer.
+[DEBUGGING.md](DEBUGGING.md) is the honest record of what went wrong and how each problem was
+found.
