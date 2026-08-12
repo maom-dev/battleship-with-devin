@@ -13,15 +13,17 @@
     </header>
 
     <!-- Shown only if the page is opened straight from the file system, where
-         browsers refuse to load JavaScript modules. ui.js removes it. -->
+         browsers refuse to load JavaScript modules. ui.js removes it and
+         reveals <main>, so a page that cannot run shows the notice alone. -->
     <p id="loading-warning" class="warning">
       The game has not started. If you opened this file by double-clicking it, your browser is
       blocking the game's code for security reasons. Serve the folder instead — see the README —
       and open the address it prints.
     </p>
 
-    <main>
+    <main hidden>
       <section class="status" aria-live="polite">
+        <p id="status-result" class="status-result"></p>
         <p id="status-turn" class="status-turn">Your turn: click a square on the enemy's waters.</p>
         <p id="status-you" class="status-line"></p>
         <p id="status-enemy" class="status-line"></p>
@@ -32,12 +34,14 @@
           <h2>Enemy waters</h2>
           <p class="board-hint">Click a square to fire.</p>
           <div id="enemy-board" class="board" role="grid" aria-label="Enemy waters"></div>
+          <ul id="enemy-fleet" class="fleet" aria-label="Enemy fleet status"></ul>
         </section>
 
         <section class="board-panel">
           <h2>Your fleet</h2>
           <p class="board-hint">The computer fires here.</p>
           <div id="player-board" class="board" role="grid" aria-label="Your fleet"></div>
+          <ul id="player-fleet" class="fleet" aria-label="Your fleet status"></ul>
         </section>
       </div>
 

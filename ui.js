@@ -20,6 +20,9 @@ const AI_THINKING_TIME = 600; // milliseconds, so the reply is readable
 
 const enemyBoardElement = document.getElementById('enemy-board');
 const playerBoardElement = document.getElementById('player-board');
+const enemyFleetElement = document.getElementById('enemy-fleet');
+const playerFleetElement = document.getElementById('player-fleet');
+const statusResult = document.getElementById('status-result');
 const statusTurn = document.getElementById('status-turn');
 const statusYou = document.getElementById('status-you');
 const statusEnemy = document.getElementById('status-enemy');
@@ -43,6 +46,9 @@ function buildBoard(container, onClick) {
       const square = document.createElement('button');
       square.type = 'button';
       square.className = 'square';
+      // Fired-at squares stay enabled: a disabled button cannot hold keyboard
+      // focus, which would throw a keyboard player back to the top of the page
+      // after every shot. Refusing the shot is game.js's job anyway.
       if (onClick) square.addEventListener('click', () => onClick(row, col));
       else square.disabled = true;
       container.appendChild(square);
@@ -55,27 +61,82 @@ function buildBoard(container, onClick) {
 const enemySquares = buildBoard(enemyBoardElement, handlePlayerShot);
 const playerSquares = buildBoard(playerBoardElement, null);
 
-function describeSquare(board, row, col, showShips) {
-  const shot = board.shots[row][col];
-  if (shot === HIT) return { className: 'square hit', label: 'hit' };
-  if (shot === MISS) return { className: 'square miss', label: 'miss' };
-  if (showShips && shipAt(board, row, col)) return { className: 'square ship', label: 'your ship' };
-  return { className: 'square', label: 'not fired at' };
+// Borders are drawn only where the neighbouring square belongs to a different
+// ship (or to none), so two ships that touch read as two shapes rather than one
+// long one.
+function outlineClasses(ship, row, col) {
+  const partOfShip = (r, c) => ship.cells.some((cell) => cell.row === r && cell.col === c);
+  const edges = [];
+  if (!partOfShip(row - 1, col)) edges.push('edge-top');
+  if (!partOfShip(row + 1, col)) edges.push('edge-bottom');
+  if (!partOfShip(row, col - 1)) edges.push('edge-left');
+  if (!partOfShip(row, col + 1)) edges.push('edge-right');
+  return edges;
 }
 
-function renderBoard(board, squares, showShips) {
+function describeSquare(board, row, col, showShips) {
+  const shot = board.shots[row][col];
+  const ship = showShips ? shipAt(board, row, col) : undefined;
+  const classes = ['square'];
+  const spoken = [];
+
+  if (ship) {
+    classes.push('ship', ...outlineClasses(ship, row, col));
+    spoken.push(isSunk(ship) ? `${ship.name}, sunk` : ship.name);
+  }
+
+  if (shot === HIT) {
+    classes.push('hit');
+    spoken.unshift('hit');
+  } else if (shot === MISS) {
+    classes.push('miss');
+    spoken.unshift('miss');
+  } else if (!ship) {
+    spoken.push('not fired at');
+  }
+
+  return { className: classes.join(' '), label: spoken.join(', ') };
+}
+
+function renderBoard(board, squares, { showShips, playable }) {
   for (let row = 0; row < BOARD_SIZE; row++) {
     for (let col = 0; col < BOARD_SIZE; col++) {
       const { className, label } = describeSquare(board, row, col, showShips);
       const square = squares[row][col];
-      square.className = className;
+      const spent = board.shots[row][col] !== null;
+
+      square.className = spent && playable ? `${className} spent` : className;
       square.setAttribute('aria-label', `${squareName(row, col)}, ${label}`);
-      // Squares already fired at, and every square once the game is over,
-      // can no longer be clicked.
-      if (!showShips) {
-        square.disabled = game.isOver || board.shots[row][col] !== null;
+
+      if (playable) {
+        // Announced as unavailable, but still focusable and still clickable, so
+        // the click reaches the code that explains why nothing happened.
+        square.setAttribute('aria-disabled', String(spent || game.isOver));
       }
     }
+  }
+}
+
+function renderFleet(list, board) {
+  list.replaceChildren();
+
+  for (const ship of board.ships) {
+    const sunk = isSunk(ship);
+    const item = document.createElement('li');
+    item.className = sunk ? 'fleet-item sunk' : 'fleet-item';
+
+    for (const [className, text] of [
+      ['fleet-name', ship.name],
+      ['fleet-length', `${ship.length}`],
+      ['fleet-state', sunk ? 'Sunk' : ''],
+    ]) {
+      const part = document.createElement('span');
+      part.className = className;
+      part.textContent = text;
+      item.append(part);
+    }
+
+    list.append(item);
   }
 }
 
@@ -83,24 +144,27 @@ function shipsLeft(board) {
   return board.ships.filter((ship) => !isSunk(ship)).length;
 }
 
+function shipCount() {
+  return `Ships left — you ${shipsLeft(game.playerBoard)}, enemy ${shipsLeft(game.aiBoard)}.`;
+}
+
 function render() {
-  renderBoard(game.aiBoard, enemySquares, false);
-  renderBoard(game.playerBoard, playerSquares, true);
+  // The enemy fleet is revealed only once the game is over.
+  renderBoard(game.aiBoard, enemySquares, { showShips: game.isOver, playable: true });
+  renderBoard(game.playerBoard, playerSquares, { showShips: true, playable: false });
+  renderFleet(enemyFleetElement, game.aiBoard);
+  renderFleet(playerFleetElement, game.playerBoard);
 
-  if (game.isOver) {
-    statusTurn.textContent =
-      game.winner === 'player'
-        ? 'You win! Every enemy ship is sunk.'
-        : 'You lose. The computer sank your whole fleet.';
-    statusTurn.className = 'status-turn status-over';
-    return;
-  }
+  // The result gets its own line so the final ship count stays readable.
+  statusResult.textContent = game.isOver
+    ? game.winner === 'player'
+      ? 'You win! Every enemy ship is sunk.'
+      : 'You lose. The computer sank your whole fleet.'
+    : '';
 
-  statusTurn.className = 'status-turn';
-  statusTurn.textContent = waitingForAi
-    ? 'The computer is taking its shot...'
-    : `Your turn: click a square on the enemy's waters. ` +
-      `Ships left — you ${shipsLeft(game.playerBoard)}, enemy ${shipsLeft(game.aiBoard)}.`;
+  if (game.isOver) statusTurn.textContent = shipCount();
+  else if (waitingForAi) statusTurn.textContent = 'The computer is taking its shot...';
+  else statusTurn.textContent = `Your turn: click a square on the enemy's waters. ${shipCount()}`;
 }
 
 function describeShot(who, cell, shot) {
@@ -146,6 +210,7 @@ function startNewGame() {
   gameId += 1;
   game = createGame();
   waitingForAi = false;
+  statusResult.textContent = '';
   statusYou.textContent = '';
   statusEnemy.textContent = '';
   render();
@@ -153,6 +218,8 @@ function startNewGame() {
 
 document.getElementById('new-game').addEventListener('click', startNewGame);
 
-// Reaching this line means the code loaded, so the "not started" notice can go.
+// Reaching this line means the code loaded, so the "not started" notice can go
+// and the game itself can appear.
 document.getElementById('loading-warning').remove();
+document.querySelector('main').hidden = false;
 render();
