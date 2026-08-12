@@ -1,0 +1,11 @@
+{
+  "name": "battleship-with-devin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser Battleship against a simple AI opponent. Plain HTML, CSS and JavaScript.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test test/"
+  }
+}
