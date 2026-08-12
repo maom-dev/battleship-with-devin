@@ -34,7 +34,9 @@ that proved them fixed.
 
 The 15 automated rules tests found no bug, because they cover the rules and the rules were
 right. Every bug was in the screen — and two of them were found only by a person using the
-deployed game on a real device, after the exploratory browser testing had already passed.
+deployed game on a real device. The exploratory browser testing did find three different UI
+issues, but it did not expose those two device-specific problems: a desktop browser cannot
+show how a phone lays the boards out in landscape, or how a square feels under a thumb.
 
 ## Running it on your own machine
 

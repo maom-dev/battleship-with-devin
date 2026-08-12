@@ -111,8 +111,9 @@ had left, so the final score could not be read.
 
 ## 6. Both boards stacked vertically on a phone in landscape (Checkpoint 3)
 
-**Found by:** the project owner, playing the deployed game on his own phone. Neither the
-automated tests nor the browser testing caught it.
+**Found by:** the project owner, playing the deployed game on his own phone. The 15 automated
+rules tests could not catch it — they cover the rules, not the screen — and the exploratory
+browser testing, which did find three other UI issues, did not expose this one either.
 
 **The bug:** each square was a fixed 32 pixels, so one board was always 342 pixels wide and
 two boards needed 748 pixels including the gap and page margins. Phones in landscape are
@@ -138,7 +139,7 @@ this stays a documented trade-off.
 
 **Testing gap this exposed:** the browser used for testing would not resize below 485
 pixels, so narrow layouts were only ever partly checked. That is why a human on a real
-phone found this and the automated testing did not.
+phone found this and the exploratory browser testing did not.
 
 ---
 
@@ -210,4 +211,7 @@ those fixes safe to make quickly.
 
 Every bug found after Checkpoint 1 was in the screen, the part with no automated tests of its
 own. Two of them were found only because a person used the real thing on a real device, after
-the rules tests and the exploratory browser testing had both passed.
+all 15 automated rules tests had passed. The exploratory browser testing did find three
+different UI issues, but it did not expose those two device-specific problems — a desktop
+browser cannot show how a phone lays the boards out in landscape, or how a square feels under
+a thumb.
