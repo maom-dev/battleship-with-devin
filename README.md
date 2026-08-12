@@ -22,15 +22,19 @@ The computer picks a square at random from the ones it has not tried yet. It can
 
 ## How it was verified
 
-| What | How |
-|---|---|
-| The rules | 15 automated tests (`npm test`), run on every push and pull request by GitHub Actions. |
-| The screen | A scripted browser played complete games and asserted 26 checks: turn discipline under rapid clicking, keyboard play, the fleet lists against the boards, no enemy positions leaking before the end, and every layout from 320px to desktop. |
-| The real thing | The finished game played on a phone: boards side by side in landscape with comfortably tappable squares, stacked in portrait, New game resetting correctly. |
+Four stages, at different points in the project. The run that found the bugs is not the run
+that proved them fixed.
 
-The order matters: the automated tests never found a bug, because they cover the rules and the
-rules were right. Every bug was in the screen — and the last two were found only by a person
-using the deployed game on a real device.
+| Stage | When | Outcome |
+|---|---|---|
+| 15 automated rules tests (`npm test`), run on every push and pull request by GitHub Actions | Checkpoint 1 onwards | No bugs found — the rules were right, and the tests have protected them ever since |
+| Exploratory browser testing of the first playable version | Checkpoint 2, before any fixes | Three UI bugs found |
+| Scripted browser regression run, 26 checks: turn discipline under rapid clicking, keyboard play, the fleet lists against the boards, no enemy positions leaking before the end, and every layout from 320px to desktop | Checkpoint 3, after the fixes | 26 of 26 passed, no new bugs |
+| The owner playing the deployed game on a phone | Checkpoint 3, then again at Checkpoint 4 | Two UX bugs found, and later confirmed fixed: boards side by side in landscape with comfortably tappable squares, stacked in portrait, New game resetting correctly |
+
+The 15 automated rules tests found no bug, because they cover the rules and the rules were
+right. Every bug was in the screen — and two of them were found only by a person using the
+deployed game on a real device, after the exploratory browser testing had already passed.
 
 ## Running it on your own machine
 

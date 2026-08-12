@@ -169,8 +169,11 @@ against the list.
 
 ## Verification after the fixes
 
-Recorded here because a debugging log that only lists failures is misleading — the checks that
-passed are what make the fixes believable.
+Everything below is a *regression* run: it happened **after** the Checkpoint 3 repairs, to
+confirm they work and that nothing else broke. It is not the testing that found the bugs —
+bugs 3, 4 and 5 came from exploratory browser testing of the first playable version, and bugs
+6 and 7 from the owner playing the deployed game. This run found nothing new, which is the
+result a regression run is supposed to produce.
 
 | Check | Result |
 |---|---|
@@ -182,28 +185,29 @@ passed are what make the fixes believable.
 | Touching ships | Every touching pair separated by an outline; fleet lists matched the boards exactly — the fix for bug 7 |
 | Enemy positions before game over | Not present anywhere in the page, not just invisible |
 | Turn discipline | Rapid clicking, spamming one square, clicking during the computer's pause, and pressing New game mid-pause all stayed strictly one shot each |
-| The deployed game on a phone | Landscape boards side by side and easy to tap, portrait stacked, New game resetting correctly |
+| The deployed game on a phone, played by the owner at Checkpoint 4 | Landscape boards side by side and easy to tap, portrait stacked, New game resetting correctly |
 
 The last row is the one that matters most, and it is the one no script could produce. Bugs 6
 and 7 were found that way, so the fixes were confirmed the same way.
 
 ## What this log says about the process
 
-Seven problems, found four different ways:
+Seven problems, and where each of them came from:
 
 | How it was found | Which ones |
 |---|---|
 | A human reading requirements against tests | 1 |
 | A human questioning a line of test code | 2 |
-| Automated tests | *none* |
-| Playing the game in a browser | 3, 4, 5 |
+| The 15 automated rules tests | *none* |
+| Exploratory browser testing of the first playable version | 3, 4, 5 |
 | The owner using the deployed game on a real device | 6, 7 |
+| The scripted browser regression run after the fixes | *none — 26 of 26 passed* |
 
-The automated tests found nothing, and that is not a criticism of them: they cover the
+The 15 automated rules tests found no bug, and that is not a criticism of them: they cover the
 rules, the rules were right, and they have been protecting the rules ever since — every fix
 in Checkpoint 3 touched only the screen, and `npm test` staying at 15 out of 15 is what made
 those fixes safe to make quickly.
 
-Every bug found after Checkpoint 1 was in the part with no automated tests. Two of them were
-found only because a person used the real thing on a real device, after both the test suite
-and a scripted browser run had passed.
+Every bug found after Checkpoint 1 was in the screen, the part with no automated tests of its
+own. Two of them were found only because a person used the real thing on a real device, after
+the rules tests and the exploratory browser testing had both passed.
