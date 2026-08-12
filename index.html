@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Battleship</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Battleship</h1>
+      <p class="subtitle">You against the computer. Both fleets are placed at random.</p>
+    </header>
+
+    <!-- Shown only if the page is opened straight from the file system, where
+         browsers refuse to load JavaScript modules. ui.js removes it. -->
+    <p id="loading-warning" class="warning">
+      The game has not started. If you opened this file by double-clicking it, your browser is
+      blocking the game's code for security reasons. Serve the folder instead — see the README —
+      and open the address it prints.
+    </p>
+
+    <main>
+      <section class="status" aria-live="polite">
+        <p id="status-turn" class="status-turn">Your turn: click a square on the enemy's waters.</p>
+        <p id="status-you" class="status-line"></p>
+        <p id="status-enemy" class="status-line"></p>
+      </section>
+
+      <div class="boards">
+        <section class="board-panel">
+          <h2>Enemy waters</h2>
+          <p class="board-hint">Click a square to fire.</p>
+          <div id="enemy-board" class="board" role="grid" aria-label="Enemy waters"></div>
+        </section>
+
+        <section class="board-panel">
+          <h2>Your fleet</h2>
+          <p class="board-hint">The computer fires here.</p>
+          <div id="player-board" class="board" role="grid" aria-label="Your fleet"></div>
+        </section>
+      </div>
+
+      <p class="controls">
+        <button id="new-game" type="button">New game</button>
+      </p>
+
+      <p class="legend">
+        <span class="key key-ship"></span> your ship
+        <span class="key key-hit"></span> hit
+        <span class="key key-miss"></span> miss
+      </p>
+    </main>
+
+    <script type="module" src="ui.js"></script>
+  </body>
+</html>

@@ -1,0 +1,185 @@
+:root {
+  --water: #dbeafe;
+  --water-edge: #93c5fd;
+  --ship: #64748b;
+  --hit: #dc2626;
+  --miss: #f1f5f9;
+  --ink: #0f172a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 1.5rem 1rem 3rem;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--ink);
+  background: #f8fafc;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.9rem;
+}
+
+.subtitle {
+  margin: 0.25rem 0 0;
+  color: #475569;
+}
+
+.warning {
+  max-width: 40rem;
+  margin: 1rem auto;
+  padding: 0.75rem 1rem;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #7f1d1d;
+}
+
+main {
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+.status {
+  min-height: 5.5rem;
+  text-align: center;
+}
+
+.status-turn {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.status-over {
+  font-size: 1.4rem;
+  color: #1d4ed8;
+}
+
+.status-line {
+  margin: 0.15rem 0;
+  color: #334155;
+}
+
+.boards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+}
+
+.board-panel {
+  text-align: center;
+}
+
+.board-panel h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.board-hint {
+  margin: 0.15rem 0 0.6rem;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(10, 2rem);
+  grid-template-rows: repeat(10, 2rem);
+  gap: 2px;
+  padding: 2px;
+  background: var(--water-edge);
+  border-radius: 4px;
+}
+
+.square {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  border-radius: 2px;
+  background: var(--water);
+  cursor: pointer;
+}
+
+.square:disabled {
+  cursor: default;
+}
+
+.square:not(:disabled):hover {
+  background: #bfdbfe;
+}
+
+.square:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 1px;
+}
+
+.square.ship {
+  background: var(--ship);
+}
+
+.square.hit {
+  background: var(--hit);
+}
+
+.square.miss {
+  background: var(--miss);
+}
+
+.controls {
+  text-align: center;
+  margin: 1.5rem 0 0.5rem;
+}
+
+#new-game {
+  padding: 0.55rem 1.4rem;
+  font-size: 1rem;
+  color: #fff;
+  background: #1d4ed8;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#new-game:hover {
+  background: #1e40af;
+}
+
+.legend {
+  text-align: center;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.key {
+  display: inline-block;
+  width: 0.9rem;
+  height: 0.9rem;
+  margin: 0 0.2rem 0 0.9rem;
+  border-radius: 2px;
+  vertical-align: -1px;
+}
+
+.key-ship {
+  background: var(--ship);
+}
+
+.key-hit {
+  background: var(--hit);
+}
+
+.key-miss {
+  background: var(--miss);
+  border: 1px solid #cbd5e1;
+}
