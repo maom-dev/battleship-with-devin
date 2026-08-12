@@ -111,8 +111,9 @@ had left, so the final score could not be read.
 
 ## 6. Both boards stacked vertically on a phone in landscape (Checkpoint 3)
 
-**Found by:** the project owner, playing the deployed game on his own phone. Neither the
-automated tests nor the browser testing caught it.
+**Found by:** the project owner, playing the deployed game on his own phone. The 15 automated
+rules tests could not catch it — they cover the rules, not the screen — and the exploratory
+browser testing, which did find three other UI issues, did not expose this one either.
 
 **The bug:** each square was a fixed 32 pixels, so one board was always 342 pixels wide and
 two boards needed 748 pixels including the gap and page margins. Phones in landscape are
@@ -129,11 +130,16 @@ the boards stack on purpose and the squares return to full size.
 pixels. A ten-wide grid at 44 pixels needs a screen about 494 pixels wide *per board*, so
 that target is unreachable on any phone; the boards get the largest squares the screen
 allows and no more. This is a genuine trade-off of showing two 10x10 grids at once, not
-something a different stylesheet could solve.
+something a different stylesheet could solve, so it was put to the owner as a trade-off to
+accept or reject rather than quietly forced.
+
+**Not recorded as a bug:** he then played the deployed game on his own phone and found the
+squares easy to tap. Falling short of a published guideline is not the same as a defect, so
+this stays a documented trade-off.
 
 **Testing gap this exposed:** the browser used for testing would not resize below 485
 pixels, so narrow layouts were only ever partly checked. That is why a human on a real
-phone found this and the automated testing did not.
+phone found this and the exploratory browser testing did not.
 
 ---
 
@@ -162,23 +168,50 @@ against the list.
 
 ---
 
+## Verification after the fixes
+
+Everything below is a *regression* run: it happened **after** the Checkpoint 3 repairs, to
+confirm they work and that nothing else broke. It is not the testing that found the bugs —
+bugs 3, 4 and 5 came from exploratory browser testing of the first playable version, and bugs
+6 and 7 from the owner playing the deployed game. This run found nothing new, which is the
+result a regression run is supposed to produce.
+
+| Check | Result |
+|---|---|
+| `npm test` | 15 of 15, unchanged by every Checkpoint 3 fix |
+| Keyboard: three shots in a row | Focus stayed on each fired square — the fix for bug 3 |
+| Repeated shot | The explanation now appears, and still costs no turn — the fix for bug 4 |
+| Ship count at game over | Still on screen beside the result — the fix for bug 5 |
+| Layouts 320-844px | Side by side in landscape, stacked in portrait, no horizontal scrolling anywhere — the fix for bug 6 |
+| Touching ships | Every touching pair separated by an outline; fleet lists matched the boards exactly — the fix for bug 7 |
+| Enemy positions before game over | Not present anywhere in the page, not just invisible |
+| Turn discipline | Rapid clicking, spamming one square, clicking during the computer's pause, and pressing New game mid-pause all stayed strictly one shot each |
+| The deployed game on a phone, played by the owner at Checkpoint 4 | Landscape boards side by side and easy to tap, portrait stacked, New game resetting correctly |
+
+The last row is the one that matters most, and it is the one no script could produce. Bugs 6
+and 7 were found that way, so the fixes were confirmed the same way.
+
 ## What this log says about the process
 
-Seven problems, found four different ways:
+Seven problems, and where each of them came from:
 
 | How it was found | Which ones |
 |---|---|
 | A human reading requirements against tests | 1 |
 | A human questioning a line of test code | 2 |
-| Automated tests | *none* |
-| Playing the game in a browser | 3, 4, 5 |
+| The 15 automated rules tests | *none* |
+| Exploratory browser testing of the first playable version | 3, 4, 5 |
 | The owner using the deployed game on a real device | 6, 7 |
+| The scripted browser regression run after the fixes | *none — 26 of 26 passed* |
 
-The automated tests found nothing, and that is not a criticism of them: they cover the
+The 15 automated rules tests found no bug, and that is not a criticism of them: they cover the
 rules, the rules were right, and they have been protecting the rules ever since — every fix
 in Checkpoint 3 touched only the screen, and `npm test` staying at 15 out of 15 is what made
 those fixes safe to make quickly.
 
-Every bug found after Checkpoint 1 was in the part with no automated tests. Two of them were
-found only because a person used the real thing on a real device, after both the test suite
-and a scripted browser run had passed.
+Every bug found after Checkpoint 1 was in the screen, the part with no automated tests of its
+own. Two of them were found only because a person used the real thing on a real device, after
+all 15 automated rules tests had passed. The exploratory browser testing did find three
+different UI issues, but it did not expose those two device-specific problems — a desktop
+browser cannot show how a phone lays the boards out in landscape, or how a square feels under
+a thumb.

@@ -3,7 +3,10 @@
 A browser game of Battleship: one human player against a simple computer opponent.
 Built with plain HTML, CSS and JavaScript — no framework, no build step, no server.
 
-**Status: Checkpoint 3 of 4 — playable, and the bugs found by testing are fixed.**
+**Play it: <https://maom-dev.github.io/battleship-with-devin/>**
+
+**Status: complete (Checkpoint 4 of 4).** Deployed, tested in a browser and on a phone, and
+every bug found along the way is written up in [DEBUGGING.md](DEBUGGING.md).
 
 ## How to play
 
@@ -16,6 +19,24 @@ allowed to touch, so each one is outlined to keep two neighbours from looking li
 The enemy's ships stay hidden until the game is over, then the whole enemy fleet is revealed.
 
 The computer picks a square at random from the ones it has not tried yet. It cannot see where your ships are.
+
+## How it was verified
+
+Four stages, at different points in the project. The run that found the bugs is not the run
+that proved them fixed.
+
+| Stage | When | Outcome |
+|---|---|---|
+| 15 automated rules tests (`npm test`), run on every push and pull request by GitHub Actions | Checkpoint 1 onwards | No bugs found — the rules were right, and the tests have protected them ever since |
+| Exploratory browser testing of the first playable version | Checkpoint 2, before any fixes | Three UI bugs found |
+| Scripted browser regression run, 26 checks: turn discipline under rapid clicking, keyboard play, the fleet lists against the boards, no enemy positions leaking before the end, and every layout from 320px to desktop | Checkpoint 3, after the fixes | 26 of 26 passed, no new bugs |
+| The owner playing the deployed game on a phone | Checkpoint 3, then again at Checkpoint 4 | Two UX bugs found, and later confirmed fixed: boards side by side in landscape with comfortably tappable squares, stacked in portrait, New game resetting correctly |
+
+The 15 automated rules tests found no bug, because they cover the rules and the rules were
+right. Every bug was in the screen — and two of them were found only by a person using the
+deployed game on a real device. The exploratory browser testing did find three different UI
+issues, but it did not expose those two device-specific problems: a desktop browser cannot
+show how a phone lays the boards out in landscape, or how a square feels under a thumb.
 
 ## Running it on your own machine
 
@@ -68,3 +89,12 @@ request shows a green tick or a red cross before anyone has to read the code.
 ## Licence
 
 MIT — see [LICENSE](LICENSE).
+
+## About this project
+
+Built by [Devin](https://devin.ai) under human direction, in four reviewed checkpoints: the
+rules and their tests, the playable screen, the bug fixes, then deployment and documentation.
+The scope was deliberately kept small — no framework, no build step, random ship placement, one
+simple opponent — so that every decision could be reviewed and explained by a non-engineer.
+[DEBUGGING.md](DEBUGGING.md) is the honest record of what went wrong and how each problem was
+found.
