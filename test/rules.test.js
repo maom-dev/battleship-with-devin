@@ -217,18 +217,48 @@ test('the game ends when one side loses all five ships, and refuses further shot
   assert.equal(JSON.stringify(game.playerBoard.shots), before);
 });
 
+// The AI picks its square with `choices[Math.floor(random() * choices.length)]`,
+// and `choices` is every untried square in order. So a random source that
+// returns exactly the right fraction makes the AI pick the square we want.
+// This configures the AI through the parameter it already offers; it does not
+// reach in and rewrite the game's own state.
+function aimAt(board, target) {
+  const choices = untriedCells(board);
+  const index = choices.findIndex((cell) => cell.row === target.row && cell.col === target.col);
+  assert.ok(index >= 0, 'that square has already been fired at');
+  // The +0.5 lands in the middle of the slot, so rounding can never slip.
+  return () => (index + 0.5) / choices.length;
+}
+
 test('the AI can win too, and the game stops as soon as it does', () => {
   const game = createGame();
-  // Hand the turn to the AI every time so it can play out a whole game on its
-  // own. This is the one place a test deliberately overrides turn order — the
-  // point here is the winning condition, which is tested above.
-  for (let i = 0; i < BOARD_SIZE * BOARD_SIZE && !game.isOver; i++) {
-    game.turn = 'ai';
-    aiTurn(game);
+
+  // Every square of the player's fleet, which is what the AI must hit.
+  const playerShipCells = game.playerBoard.ships.flatMap((ship) => ship.cells);
+
+  for (const target of playerShipCells) {
+    assert.equal(game.isOver, false, 'the game ended before the last ship was sunk');
+
+    // The player takes a real turn but deliberately fires at empty water, so it
+    // never wins by accident. There are 83 water squares and only 17 turns.
+    const water = untriedCells(game.aiBoard).find(
+      (cell) => !shipAt(game.aiBoard, cell.row, cell.col)
+    );
+    assert.equal(playerTurn(game, water.row, water.col).result, MISS);
+
+    // Now the AI fires, guided at one of the player's ship squares.
+    const shot = aiTurn(game, aimAt(game.playerBoard, target));
+    assert.equal(shot.valid, true, 'the AI was refused its turn');
+    assert.deepEqual(shot.cell, target, 'the AI did not fire where the test aimed it');
+    assert.equal(shot.result, HIT);
   }
+
+  assert.equal(allShipsSunk(game.playerBoard), true);
   assert.equal(game.isOver, true);
   assert.equal(game.winner, 'ai');
-  assert.equal(allShipsSunk(game.playerBoard), true);
+
+  // Turn order was obeyed throughout: 17 shots each, and no square fired at twice.
+  assert.equal(untriedCells(game.playerBoard).length, BOARD_SIZE * BOARD_SIZE - playerShipCells.length);
 });
 
 test('a whole game played by both sides always ends with exactly one winner', () => {
