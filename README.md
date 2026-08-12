@@ -3,13 +3,17 @@
 A browser game of Battleship: one human player against a simple computer opponent.
 Built with plain HTML, CSS and JavaScript — no framework, no build step, no server.
 
-**Status: Checkpoint 2 of 4 — the game is playable.**
+**Status: Checkpoint 3 of 4 — playable, and the bugs found by testing are fixed.**
 
 ## How to play
 
 Both fleets are placed at random when the page loads. Click a square on **Enemy waters** to fire;
 the computer then fires back at **Your fleet**. Red is a hit, white is a miss, grey is one of your ships.
 The first side to sink all five enemy ships wins. **New game** reshuffles both fleets and starts again.
+
+Under each board is a fleet list naming every ship, its length, and whether it has been sunk. Ships are
+allowed to touch, so each one is outlined to keep two neighbours from looking like a single longer ship.
+The enemy's ships stay hidden until the game is over, then the whole enemy fleet is revealed.
 
 The computer picks a square at random from the ones it has not tried yet. It cannot see where your ships are.
 
@@ -36,10 +40,9 @@ the one most machines already have.)
 | `styles.css` | How it looks — the grid of squares and the colours. |
 | `game.js` | The rules: placing ships, firing, hit / miss / sunk, and when the game is over. Contains no screen code at all. |
 | `ui.js` | The screen: draws the boards from the game state and handles clicks. Decides nothing itself. |
+| `DEBUGGING.md` | Every bug found in this project, how it was found and how it was fixed. |
 | `test/rules.test.js` | Automated tests for the rules. |
 | `package.json` | Just enough configuration for `npm test` to work. No dependencies are installed. |
-
-Still to come: `DEBUGGING.md` (Checkpoint 3).
 
 ## Running the tests
 
@@ -59,6 +62,7 @@ request shows a green tick or a red cross before anyone has to read the code.
 - Both fleets are placed randomly by the program.
 - Players take strict alternating turns. A square can only be fired at once.
 - Clicking a square you have already fired at is ignored, and does not cost you your turn.
+- Ships may be placed touching each other. They may not overlap or hang off the edge.
 - A ship sinks when all of its squares are hit; the first side to sink all five enemy ships wins.
 
 ## Licence
