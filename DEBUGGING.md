@@ -168,6 +168,75 @@ against the list.
 
 ---
 
+## 8. The computer opponent was too weak to be worth playing (after Checkpoint 4)
+
+**Found by:** the project owner playing the finished, deployed game. Not a rule being broken —
+the opponent obeyed every rule — but it never followed up a hit, which a person notices
+immediately and no rules test would ever ask about.
+
+**The bug:** `chooseAiShot` picked uniformly from every square it had not tried and kept no
+notes at all, so the result of its last shot changed nothing about its next one. After a hit,
+the chance it tried a neighbouring square was about one in twenty-five. Measured over 1,000
+seeded fleets it needed **95.5 shots on average** to sink seventeen squares — very nearly the
+whole board — so the player won almost every game.
+
+**The fix:** the opponent now hunts and targets, and is given its own notes
+(`createAiState`) rather than none: one colour of the checkerboard while it is searching, then
+the squares around its unexplained hits, preferring the line once two hits align. Same
+measurement: **52.5 shots on average**, fewer than the random opponent on 100% of the same
+1,000 fleets.
+
+**Two things ships-may-touch forced, which are easy to get wrong:**
+
+1. When a ship sinks, the opponent is told its name, so it knows how many squares it was —
+   but never *which* of its hits those were, because a row of hits can be two ships moored
+   together. So the bookkeeping is a count of unexplained hits, and while that count is above
+   zero the chase continues on all of them. Claiming to know which hits belonged to the wreck
+   would abandon half-found ships.
+2. The usual trick of marking the ring of water around a sunk ship as empty is simply invalid
+   in this game, and is deliberately absent. A ship may be moored right alongside the one
+   that just sank.
+
+For the same reason two aligned hits only *prefer* a direction: if that line turns out to be
+two touching ships, both ends go to water and the opponent falls back to the other neighbours
+of its hits instead of walking away.
+
+**What it is allowed to know:** the squares it has fired at, whether each was a hit or a miss,
+and the names of sunk ships — the same three things the player reads off the screen. Rather
+than trust review, the shape of the code enforces it: the strategy is handed the grid of hits
+and misses, its own notes and a random source, never a board, so the ship positions are not
+reachable from anything it is given. Three tests hold that line: one asserts exactly what the
+game passes the strategy and that no ship data can be reached from it, one gives the same
+visible history to two completely different hidden fleets and requires the identical shot fifty
+times over, and one checks the strategy does not so much as modify the grid it is shown.
+
+**Tests added:** 13, all with the fleet placed by hand. Where the choice of square matters they
+check *every* square the opponent could have picked rather than one lucky roll: the search
+pattern and its fallback when that colour is used up, the follow-up after a single hit
+including in a corner, carrying a line on at either end, one end blocked by the board edge,
+both ends dead so it must fall back, returning to the hunt when nothing is unexplained, and a
+Destroyer moored flush against a Cruiser where the first sinking leaves a hit unexplained and
+the opponent has to keep going. Plus a seeded replay: the same seed plays the same game twice.
+
+**Also added:** `scripts/ai-benchmark.js` (`npm run bench`), which plays both opponents against
+the same 1,000 seeded fleets. Same fleets for both, so the difference in the numbers is the
+difference between the opponents and not luck in where the ships were; each run gets its own
+deep copy of the ships, their hit counters and the shots grid, so neither run can disturb the
+other.
+
+**Not changed:** the screen. `ui.js` still calls `aiTurn(game)` exactly as before, and "New
+game" clears the opponent's notes for free because it rebuilds the game. The only test that had
+to be rewritten was the one that used to steer the opponent by feeding it a rigged random
+number — that trick relied on the opponent choosing from *all* untried squares in order, which
+is no longer true. `aiTurn` now takes an optional square-chooser for that purpose, which the
+game itself never passes.
+
+**Lesson:** "obeys the rules" and "is worth playing against" are different properties, and the
+15 rules tests only ever promised the first. A person playing one game spotted in seconds what
+a green test suite had no opinion about.
+
+---
+
 ## Verification after the fixes
 
 Everything below is a *regression* run: it happened **after** the Checkpoint 3 repairs, to
@@ -193,16 +262,20 @@ and 7 were found that way, so the fixes were confirmed the same way.
 
 ## What this log says about the process
 
-Seven problems, and where each of them came from:
+Eight problems, and where each of them came from:
 
 | How it was found | Which ones |
 |---|---|
 | A human reading requirements against tests | 1 |
 | A human questioning a line of test code | 2 |
+| The owner playing the finished, deployed game | 8 |
 | The 15 automated rules tests | *none* |
 | Exploratory browser testing of the first playable version | 3, 4, 5 |
 | The owner using the deployed game on a real device | 6, 7 |
 | The scripted browser regression run after the fixes | *none — 26 of 26 passed* |
+
+The automated suite now stands at 28 tests: the 15 rules tests, unchanged in what they promise,
+plus 13 for the computer opponent added with bug 8.
 
 The 15 automated rules tests found no bug, and that is not a criticism of them: they cover the
 rules, the rules were right, and they have been protecting the rules ever since — every fix
