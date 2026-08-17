@@ -18,6 +18,9 @@ import {
   canPlace,
   fireAt,
   chooseAiShot,
+  chooseRandomShot,
+  createAiState,
+  recordAiResult,
   untriedCells,
   allShipsSunk,
   isSunk,
@@ -111,17 +114,20 @@ test('the same square can never be attacked twice', () => {
 
 test('the AI never fires at a square it has already tried', () => {
   const board = createBoard();
+  const ai = createAiState();
   const seen = new Set();
   for (let i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
-    const cell = chooseAiShot(board);
+    const cell = chooseAiShot(board.shots, ai);
     assert.ok(cell, 'the AI ran out of squares too early');
     const key = `${cell.row},${cell.col}`;
     assert.ok(!seen.has(key), `the AI repeated square ${key}`);
     seen.add(key);
-    assert.equal(fireAt(board, cell.row, cell.col).valid, true);
+    const shot = fireAt(board, cell.row, cell.col);
+    assert.equal(shot.valid, true);
+    recordAiResult(ai, cell, shot);
   }
   // After 100 shots the whole board is used up and there is nothing left to pick.
-  assert.equal(chooseAiShot(board), null);
+  assert.equal(chooseAiShot(board.shots, ai), null);
   assert.equal(untriedCells(board).length, 0);
 });
 
@@ -217,17 +223,15 @@ test('the game ends when one side loses all five ships, and refuses further shot
   assert.equal(JSON.stringify(game.playerBoard.shots), before);
 });
 
-// The AI picks its square with `choices[Math.floor(random() * choices.length)]`,
-// and `choices` is every untried square in order. So a random source that
-// returns exactly the right fraction makes the AI pick the square we want.
-// This configures the AI through the parameter it already offers; it does not
-// reach in and rewrite the game's own state.
-function aimAt(board, target) {
-  const choices = untriedCells(board);
-  const index = choices.findIndex((cell) => cell.row === target.row && cell.col === target.col);
-  assert.ok(index >= 0, 'that square has already been fired at');
-  // The +0.5 lands in the middle of the slot, so rounding can never slip.
-  return () => (index + 0.5) / choices.length;
+// aiTurn takes an optional square-chooser, which is how a test aims the AI at a
+// particular square. It configures the AI through a parameter the rules already
+// offer; it does not reach in and rewrite the game's own state, and the game in
+// the browser never passes it.
+function aimAt(target) {
+  return (shots) => {
+    assert.equal(shots[target.row][target.col], UNKNOWN, 'that square has already been fired at');
+    return { row: target.row, col: target.col };
+  };
 }
 
 test('the AI can win too, and the game stops as soon as it does', () => {
@@ -247,7 +251,7 @@ test('the AI can win too, and the game stops as soon as it does', () => {
     assert.equal(playerTurn(game, water.row, water.col).result, MISS);
 
     // Now the AI fires, guided at one of the player's ship squares.
-    const shot = aiTurn(game, aimAt(game.playerBoard, target));
+    const shot = aiTurn(game, Math.random, aimAt(target));
     assert.equal(shot.valid, true, 'the AI was refused its turn');
     assert.deepEqual(shot.cell, target, 'the AI did not fire where the test aimed it');
     assert.equal(shot.result, HIT);
@@ -267,7 +271,7 @@ test('a whole game played by both sides always ends with exactly one winner', ()
     // Both sides fire at random. A game can last at most 100 shots each,
     // because no square may be fired at twice.
     for (let i = 0; i < BOARD_SIZE * BOARD_SIZE && !game.isOver; i++) {
-      const cell = chooseAiShot(game.aiBoard);
+      const cell = chooseRandomShot(game.aiBoard.shots);
       playerTurn(game, cell.row, cell.col);
       aiTurn(game);
     }
